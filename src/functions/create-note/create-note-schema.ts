@@ -19,6 +19,9 @@ export const schema = {
       type: "boolean",
       default: false,
     },
+    filename: {
+      type: "string",
+    },
   },
-  required: ["title", "content", "entityType"],
+  required: ["title", "content", "entityType", "isPrivate"],
 };

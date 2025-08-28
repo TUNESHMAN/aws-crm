@@ -7,6 +7,8 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as path from "path";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as iam from "aws-cdk-lib/aws-iam";
 export class AwsCrmStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -16,6 +18,14 @@ export class AwsCrmStack extends cdk.Stack {
     // example resource
     // const queue = new sqs.Queue(this, 'AwsCrmQueue', {
     //   visibilityTimeout: cdk.Duration.seconds(300)
+
+    // we create the new s3 bucket for storing file objects
+    const bucket = new s3.Bucket(this, "FileBucket", {
+      bucketName: "leighton-crm-bucket-babs",
+      autoDeleteObjects: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      enforceSSL: true,
+    });
     const createCustomerLambda = new NodejsFunction(
       this,
       "CreateCustomerLambda",
@@ -237,6 +247,19 @@ export class AwsCrmStack extends cdk.Stack {
     table.grantReadData(getAllCustomersLambda);
     table.grantWriteData(createCustomerNoteLambda);
     table.grantReadData(getAllNotesLambda);
+    createCustomerNoteLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream", // optional
+        ],
+        resources: [
+          `arn:aws:bedrock:eu-west-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0`,
+        ],
+      })
+    );
+    // allow the Lambda function to put objects and generate presigned urls
+    bucket.grantWrite(createCustomerNoteLambda);
     // add GSI
     // we add a GSI to support querying all customers by type
     table.addGlobalSecondaryIndex({

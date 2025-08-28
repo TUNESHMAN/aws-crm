@@ -4,11 +4,13 @@ export interface Note {
   id: string;
   title: string;
   content: string;
-  entityType: 'Contact' | 'Lead' | 'Opportunity' | 'Account';
+  entityType: "Contact" | "Lead" | "Opportunity" | "Account";
   isPrivate?: boolean;
-
   created: string;
   updated: string;
-  type: 'NOTE';
+  type: "NOTE";
   customerId: string;
+  attachmentKey?: string;
+  filename?: string;
+  summary: string;
 }
